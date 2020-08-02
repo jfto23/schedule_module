@@ -1,7 +1,6 @@
 use std::fs::File;
-use std::io::Read;
 use std::io::BufReader;
-use chrono::{Weekday, TimeZone, DateTime, Utc, NaiveDate, NaiveDateTime};
+use chrono::prelude::*;
 
 use ical;
 
@@ -109,39 +108,32 @@ fn fetch_courses() -> Vec<Course> {
 
     let mut course = Course::default();
 
-
     for line in reader {
 
         if let Ok(property) = line {
-            //println!("{}", property);
 
             if property.name== "RRULE" {
-                //println!("{}", property.value.unwrap());
-
                 let inner = property.value.unwrap();
                 let entries: Vec<&str> = inner
                     .split(";")
                     .collect();
 
                 parse_rrule(entries, &mut course);
-
-                //println!("{:?}", course);
             }
-            else if property.name== "DTSTART" {
-                //println!("{}", property.value.unwrap());
 
+            else if property.name== "DTSTART" {
                 if let DateTimeType::NaiveType(dt) = parse_ics_datetime(&property.value.unwrap()) {
                     course.dtstart = Some(dt);
                 }
             }
+
             else if property.name== "DTEND" {
-                //println!("{}", property.value.unwrap());
                 if let DateTimeType::NaiveType(dt) = parse_ics_datetime(&property.value.unwrap()) {
                     course.dtend = Some(dt);
                 }
             }
+
             else if property.name == "SUMMARY" {
-                //println!("{}", property.value.unwrap());
                 course.summary = Some(property.value.unwrap());
             }
 
@@ -158,15 +150,48 @@ fn fetch_courses() -> Vec<Course> {
                 course = Course::default();
             }
 
-
         }
     }
 
     courses
 }
 
+fn pick_course(courses: &Vec<Course>) {
+    let now_dt = Utc::now();
+    let now_ndt = Utc::now().naive_local();
+    let current_day = Weekday::Mon;
+
+    let mut duration = chrono::Duration::max_value();
+
+    let mut next_course = Course::default();
+    for course in courses {
+        let days = course.days.as_ref();
+        let days = days.unwrap();
+        for day in days {
+            if current_day == *day {
+                if now_ndt > course.dtstart.unwrap() && now_dt < course.until.unwrap() {
+                    if now_ndt.time() < course.dtend.unwrap().time() {
+                        println!("found the current course");
+                    }
+                }
+
+                let new_duration = course.dtstart.unwrap().time().signed_duration_since(now_ndt.time());
+                if now_dt < course.until.unwrap() && new_duration < duration && new_duration > chrono::Duration::zero() {
+                        duration = new_duration;
+                        next_course = course.clone();
+                        println!("found the possible next course");
+                }
+            }
+        }
+    }
+
+    println!("{:?}", next_course);
+}
+
 fn main() {
     let courses: Vec<Course> = fetch_courses();
-    println!("{:?}", courses);
+
+    pick_course(&courses);
+
 }
 
