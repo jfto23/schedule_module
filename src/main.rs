@@ -99,7 +99,7 @@ fn parse_byday(days: &str, course: &mut Course) {
     course.days = Some(course_days);
 }
 
-fn main() {
+fn fetch_courses() -> Vec<Course> {
     let buf = BufReader::new(File::open("/home/jf/Documents/courses/target/debug/CourseScheduleFall2020.ics")
                              .unwrap());
 
@@ -108,6 +108,7 @@ fn main() {
     let mut courses: Vec<Course> = Vec::new();
 
     let mut course = Course::default();
+
 
     for line in reader {
 
@@ -142,11 +143,30 @@ fn main() {
             else if property.name == "SUMMARY" {
                 //println!("{}", property.value.unwrap());
                 course.summary = Some(property.value.unwrap());
-                courses.push(course.clone());
             }
+
+
+            if let Course {
+                summary: Some(_),
+                dtstart:Some(_),
+                dtend: Some(_),
+                frequency: Some(_),
+                until: Some(_),
+                days: Some(_),
+            } = course {
+                courses.push(course.clone());
+                course = Course::default();
+            }
+
+
         }
     }
 
+    courses
+}
+
+fn main() {
+    let courses: Vec<Course> = fetch_courses();
     println!("{:?}", courses);
 }
 
