@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::BufReader;
 use chrono::prelude::*;
+use std::error::Error;
 
 use ical;
 
@@ -36,7 +37,6 @@ fn parse_rrule(rules: Vec<&str>, course: &mut Course) {
         match pairs[0] {
             "FREQ" => {
 
-                //TODO implement other frequencies
                 match pairs[1] {
                     "WEEKLY" => course.frequency = Some(Frequency::Weekly),
                     _ => {}
@@ -44,7 +44,7 @@ fn parse_rrule(rules: Vec<&str>, course: &mut Course) {
 
             },
             "UNTIL" => {
-                if let DateTimeType::UtcType(dt) = parse_ics_datetime(pairs[1]) {
+                if let DateTimeType::UtcType(dt) = parse_ics_datetime(pairs[1]).expect("Couldn't parse date-time") {
                     course.until = Some(dt);
                 }
             }
@@ -57,22 +57,23 @@ fn parse_rrule(rules: Vec<&str>, course: &mut Course) {
 }
 
 
-fn parse_ics_datetime(ics_dt: &str) -> DateTimeType {
-    let year: i32 = ics_dt[0..4].parse::<i32>().unwrap();
-    let month: u32 = ics_dt[4..6].parse::<u32>().unwrap();
-    let day: u32 = ics_dt[6..8].parse::<u32>().unwrap();
+fn parse_ics_datetime(ics_dt: &str) -> Result<DateTimeType, Box<dyn Error>> {
+    let year: i32 = ics_dt[0..4].parse::<i32>()?;
+    let month: u32 = ics_dt[4..6].parse::<u32>()?;
+    let day: u32 = ics_dt[6..8].parse::<u32>()?;
 
-    let hour: u32 = ics_dt[9..11].parse::<u32>().unwrap();
-    let minute: u32 = ics_dt[11..13].parse::<u32>().unwrap();
-    let second :u32 = ics_dt[13..15].parse::<u32>().unwrap();
+    let hour: u32 = ics_dt[9..11].parse::<u32>()?;
+    let minute: u32 = ics_dt[11..13].parse::<u32>()?;
+    let second :u32 = ics_dt[13..15].parse::<u32>()?;
 
     // utc datetime in ics files have "z" at the end
     if ics_dt.len() == 15 {
-        DateTimeType::NaiveType(NaiveDate::from_ymd(year,month,day).and_hms(hour,minute,second))
+        Ok(DateTimeType::NaiveType(NaiveDate::from_ymd(year,month,day).and_hms(hour,minute,second)))
     }
     else {
-        DateTimeType::UtcType(Utc.ymd(year,month,day).and_hms(hour,minute,second))
+        Ok(DateTimeType::UtcType(Utc.ymd(year,month,day).and_hms(hour,minute,second)))
     }
+
 }
 
 
@@ -100,20 +101,17 @@ fn parse_byday(days: &str, course: &mut Course) {
 
 fn fetch_courses() -> Vec<Course> {
     let buf = BufReader::new(File::open("/home/jf/Documents/courses/target/debug/CourseScheduleFall2020.ics")
-                             .unwrap());
+                             .expect("Can't find ics file"));
 
     let reader = ical::PropertyParser::from_reader(buf);
-
     let mut courses: Vec<Course> = Vec::new();
-
     let mut course = Course::default();
-
     for line in reader {
 
         if let Ok(property) = line {
 
+            let inner = property.value.unwrap();
             if property.name== "RRULE" {
-                let inner = property.value.unwrap();
                 let entries: Vec<&str> = inner
                     .split(";")
                     .collect();
@@ -122,21 +120,20 @@ fn fetch_courses() -> Vec<Course> {
             }
 
             else if property.name== "DTSTART" {
-                if let DateTimeType::NaiveType(dt) = parse_ics_datetime(&property.value.unwrap()) {
+                if let DateTimeType::NaiveType(dt) = parse_ics_datetime(&inner).expect("Couldn't parse date-time") {
                     course.dtstart = Some(dt);
                 }
             }
 
             else if property.name== "DTEND" {
-                if let DateTimeType::NaiveType(dt) = parse_ics_datetime(&property.value.unwrap()) {
+                if let DateTimeType::NaiveType(dt) = parse_ics_datetime(&inner).expect("Couldn't parse date-time") {
                     course.dtend = Some(dt);
                 }
             }
 
             else if property.name == "SUMMARY" {
-                course.summary = Some(property.value.unwrap());
+                course.summary = Some(inner);
             }
-
 
             if let Course {
                 summary: Some(_),
@@ -158,12 +155,15 @@ fn fetch_courses() -> Vec<Course> {
 
 fn pick_course(courses: &Vec<Course>) {
     let now_dt = Utc::now();
-    let now_ndt = Utc::now().naive_local();
-    let current_day = Weekday::Mon;
+
+    let now_ndt = Utc::now().with_timezone(&Local).naive_local();
+
+    let current_day = now_ndt.weekday();
 
     let mut duration = chrono::Duration::max_value();
 
     let mut next_course = Course::default();
+
     for course in courses {
         let days = course.days.as_ref();
         let days = days.unwrap();
@@ -171,27 +171,26 @@ fn pick_course(courses: &Vec<Course>) {
             if current_day == *day {
                 if now_ndt > course.dtstart.unwrap() && now_dt < course.until.unwrap() {
                     if now_ndt.time() < course.dtend.unwrap().time() {
-                        println!("found the current course");
+                        println!("{}", course.summary.unwrap());
                     }
                 }
 
                 let new_duration = course.dtstart.unwrap().time().signed_duration_since(now_ndt.time());
                 if now_dt < course.until.unwrap() && new_duration < duration && new_duration > chrono::Duration::zero() {
-                        duration = new_duration;
-                        next_course = course.clone();
-                        println!("found the possible next course");
+                    duration = new_duration;
+                    next_course = course.clone();
                 }
             }
         }
     }
 
-    println!("{:?}", next_course);
+    if !next_course.summary.is_none() {
+        println!("{}[{}]", next_course.summary.unwrap(), next_course.dtend.unwrap().time());
+    }
 }
 
 fn main() {
     let courses: Vec<Course> = fetch_courses();
-
     pick_course(&courses);
-
 }
 
