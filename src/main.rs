@@ -162,8 +162,11 @@ fn pick_course(courses: &Vec<Course>) {
     let now_dt = Utc::now();
 
     let now_ndt = Utc::now().with_timezone(&Local).naive_local();
+    //let now_ndt = NaiveDate::from_ymd(2020,7,14).and_hms(12,00,00);
 
     let current_day = now_ndt.weekday();
+    //let current_day = Weekday::Tue;
+    
 
     let mut duration = chrono::Duration::max_value();
 
