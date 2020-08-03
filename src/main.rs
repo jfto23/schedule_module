@@ -103,7 +103,7 @@ fn parse_byday(days: &str, course: &mut Course) {
 
 fn fetch_courses() -> Vec<Course> {
     let home = env::var("HOME").expect("Couldn't get HOME");
-    let path = format!("{}/.config/polybar/schedule.ics", home);
+    let path = format!("{}/.config/polybar/schedule_module/schedule.ics", home);
     let path = Path::new(&path);
     let buf = BufReader::new(File::open(path)
                              .expect("Can't find schedule.ics"));
@@ -161,11 +161,9 @@ fn fetch_courses() -> Vec<Course> {
 fn pick_course(courses: &Vec<Course>) {
     let now_dt = Utc::now();
 
-    //let now_ndt = Utc::now().with_timezone(&Local).naive_local();
-    let now_ndt = NaiveDate::from_ymd(2020,7,14).and_hms(12,00,30);
+    let now_ndt = Utc::now().with_timezone(&Local).naive_local();
 
-    //let current_day = now_ndt.weekday();
-    let current_day = Weekday::Tue;
+    let current_day = now_ndt.weekday();
 
     let mut duration = chrono::Duration::max_value();
 

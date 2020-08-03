@@ -5,37 +5,37 @@ for the day. It is intended to be used as a module for Polybar.
 
 ## Usage
 
-As a standalone, the script simply prints out the current and next course. The
-ics file must be in the same folder as the binary (in
-`schedule_module/target/debug`). Example:
+First, clone the repo and compile the program with `cargo`:
 
 ```
 git clone https://github.com/jfto23/schedule_module
 cd schedule_module
-cargo run
-
-Output:
-1. COMP273-001 LEC (ENGMC 204)
-2. COMP251-001 LEC (MCMED 522) [14H05]
+cargo build
 ```
 
-## Polybar
+Then create a new folder in polybar's config folder named `schedule_module` and
+put the script in it.
 
-If you want to add this to your bar, create a module for it in polybar's config
-file (usually in `~/.config/polybar/config`):
+```
+cp target/debug/schedule_module ~/.config/polybar/schedule_module
+
+```
+
+Rename your `ics` file to `schedule.ics` and put it in the `schedule_module` folder.
+
+
+Finally, create two new modules in polybar's config file:
 
 ```
 [module/current_course]
 type = custom/script
-
-exec = 
+exec = $HOME/.config/polybar/schedule_module/./schedule_module | grep \)$
 tail = true
 interval = 60
 
 [module/next_course]
 type = custom/script
-
-exec = 
+exec = $HOME/.config/polybar/schedule_module/./schedule_module | grep ]$
 tail = true
 interval = 60
 ```
