@@ -1,7 +1,10 @@
 # Schedule Module
 
+
 This is a script that parses ics files and shows the current/next course
 for the day. It is intended to be used as a module for Polybar.
+
+![](https://github.com/jfto23/schedule_module/blob/master/schedule_module.png)
 
 ## Usage
 
