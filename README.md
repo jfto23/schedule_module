@@ -50,6 +50,7 @@ modules-left = current_course next_course
 ## Limitations
 
 The script is extremely bare-bones and can only parse a small subset of ics
-files. Every course must have a `SUMMARY`, `DTSTART`, `DTEND` and
-`RRULE`. Only weekly events are going to work. In other words, the script is only
-intended to work for weekly school-like schedules.
+files. Every course must have a `SUMMARY`, `DTSTART`, `DTEND` and `RRULE`.
+`RRULE` must specify values for `BYDAY`, `UNTIL` and the frequency must be
+`WEEKLY`. In other words, the script is only intended to work for weekly
+school-like schedules.
