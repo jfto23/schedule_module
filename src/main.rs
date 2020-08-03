@@ -167,7 +167,6 @@ fn pick_course(courses: &Vec<Course>) {
     let current_day = now_ndt.weekday();
     //let current_day = Weekday::Tue;
     
-
     let mut duration = chrono::Duration::max_value();
 
     let mut next_course = Course::default();
