@@ -6,11 +6,17 @@ for the day. It is intended to be used as a module for Polybar.
 ## Usage
 
 As a standalone, the script simply prints out the current and next course. The
-ics file must be in the same folder as the binary. Example:
+ics file must be in the same folder as the binary (in
+`schedule_module/target/debug`). Example:
 
 ```
+git clone https://github.com/jfto23/schedule_module
+cd schedule_module
+cargo run
 
-
+Output:
+1. COMP273-001 LEC (ENGMC 204)
+2. COMP251-001 LEC (MCMED 522) [14H05]
 ```
 
 ## Polybar
