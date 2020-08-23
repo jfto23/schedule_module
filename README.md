@@ -3,7 +3,7 @@
 This is a script that parses ics files and shows the current/next course
 for the day. It is intended to be used as a module for Polybar.
 
-![](https://raw.githubusercontent.com/jfto23/personal_website/gh-pages/assets/images/orchid_pic.png)
+![](https://raw.githubusercontent.com/jfto23/personal_website/gh-pages/assets/images/schedule_module_pic.png)
 
 ## Usage
 
