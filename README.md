@@ -31,13 +31,11 @@ Finally, create two new modules in polybar's config file:
 [module/current_course]
 type = custom/script
 exec = $HOME/.config/polybar/schedule_module/./schedule_module | grep \)$
-tail = true
 interval = 60
 
 [module/next_course]
 type = custom/script
 exec = $HOME/.config/polybar/schedule_module/./schedule_module | grep ]$
-tail = true
 interval = 60
 ```
 
